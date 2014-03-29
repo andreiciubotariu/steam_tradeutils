@@ -19,7 +19,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URL;
 
+import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -36,6 +38,7 @@ import javax.swing.SwingConstants;
  */
 public class TradeUtil {
 	protected static String key;
+	private static Image [] images = new Image [7];
 	
 	public static void main(String[] args) { 
 		try {
@@ -211,7 +214,7 @@ public class TradeUtil {
 		}
 		final PopupMenu popup = new PopupMenu();
 		final TrayIcon trayIcon =
-				new TrayIcon(createImage(Color.DARK_GRAY ,""));
+				new TrayIcon(createImages(Color.DARK_GRAY ,-1));
 		trayIcon.setImageAutoSize(true);
 		final SystemTray tray = SystemTray.getSystemTray();
 		trayIcon.setToolTip("TradeUtils");
@@ -261,7 +264,6 @@ public class TradeUtil {
 			}
 		});
 
-
 		exitItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				tray.remove(trayIcon);
@@ -272,24 +274,35 @@ public class TradeUtil {
 		return trayIcon;
 	}
 
-	private static Image createImage (Color color, String text){
-		BufferedImage b = new BufferedImage (15,15, BufferedImage.TYPE_INT_ARGB);
+	private static Image createImages (Color color, int count){
+		for (int x = 0; x < images.length;x++){
+			try {
+				URL url = TradeUtil.class.getResource("images/"+x+".png");
+				images [x] = ImageIO.read(url);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		BufferedImage b = new BufferedImage (300,300, BufferedImage.TYPE_INT_ARGB);
 		b.createGraphics();
 		changeImage(color,b);
-		return changeImage (text,b);
+		return changeImage (count, b);
 	}
 
-	public static Image changeImage (String text, Image image){
+	public static Image changeImage (int number, Image image){
 		Graphics g = image.getGraphics();
-		g.setColor(Color.WHITE);
-		int x = text.length() == 1 ? 4 : 1;
-		g.drawString(text, x, 12);
+		if (number >= 0){
+			Image toDraw = number < images.length-1 ? images [number] : images [images.length-1];
+			g.drawImage(toDraw,0,0,null);
+		}
 		return image;
 	}
 	public static Image changeImage (Color color, Image image){
 		Graphics g = image.getGraphics();
 		g.setColor(color);
-		g.fillRect(0, 0, 15, 15);
+		g.fillRect(0, 0, 300, 300);
+
 		return image;
 	}
 }

@@ -70,7 +70,7 @@ public class DataController {
 	private Listener offerTrayIconChanger = new Listener (){
 		public void run(int count){
 			if (trayIcon != null && trayIcon.getImage() != null){
-				trayIcon.setImage (TradeUtil.changeImage(String.valueOf(count),trayIcon.getImage()));
+				trayIcon.setImage (TradeUtil.changeImage(count,trayIcon.getImage()));
 			}
 		}
 	};
@@ -196,8 +196,6 @@ public class DataController {
 				sent.setForeground(Color.BLACK);
 				sent.setText("-");
 			}
-
-			
 
 			date.setTime(updatedTimeMillis);
 			updatedTime.setText("Attempted refresh at: " + timeFormat.format(date));

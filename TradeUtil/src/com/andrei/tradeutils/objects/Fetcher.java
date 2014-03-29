@@ -9,6 +9,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
 
@@ -24,17 +25,20 @@ public class Fetcher {
 		T obj = null;
 		InputStream is = null;
 		try{
-
-			HttpClient client = HttpClientBuilder.create().build();
+			RequestConfig.Builder requestBuilder = RequestConfig.custom();
+			requestBuilder = requestBuilder.setConnectTimeout(2000);
+			requestBuilder = requestBuilder.setConnectionRequestTimeout(2000);
+					
+			HttpClient client = HttpClientBuilder.create().setDefaultRequestConfig(requestBuilder.build()).build();
 			HttpGet request = new HttpGet(url);
 			try {
 				HttpResponse response = client.execute(request);
 				HttpEntity entity = response.getEntity();
 				is = entity.getContent();
 			} catch (ClientProtocolException e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			} catch (IOException e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 
 			try {	    	
@@ -48,9 +52,8 @@ public class Fetcher {
 				Gson gson = new Gson();
 				String data = sb.toString();
 				obj = gson.fromJson(data, clazz);
-				//System.out.println (p.response.trade_offers_received.get(0).tradeofferid);
 			} catch(Exception e) {
-				System.out.println ("Error caught " + e.getMessage());
+				//System.out.println ("Error caught " + e.getMessage());
 				//e.printStackTrace();
 			}
 			return obj;
@@ -60,7 +63,7 @@ public class Fetcher {
 				try {
 					is.close();
 				} catch (IOException e) {
-					e.printStackTrace();
+					//e.printStackTrace();
 				}
 			}
 		}

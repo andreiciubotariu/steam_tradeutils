@@ -14,12 +14,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -31,6 +34,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
+import org.jasypt.util.text.BasicTextEncryptor;
+
 /**
  * 
  * @author Andrei Ciubotariu
@@ -38,12 +43,17 @@ import javax.swing.SwingConstants;
  */
 public class TradeUtil {
 	protected static String key;
+	protected static boolean format_24 = true;
 	private static Image [] images = new Image [7];
 	
 	public static void main(String[] args) { 
+		BasicTextEncryptor textEncryptor = new BasicTextEncryptor();
 		try {
-			BufferedReader in = new BufferedReader (new FileReader ("config.cfg"));
-			key = in.readLine().trim();
+			BufferedReader in = new BufferedReader (new FileReader("config.cfg"));
+			String pass = in.readLine().trim();
+			textEncryptor.setPassword(pass);
+			String eKey = in.readLine().trim();
+			key = textEncryptor.decrypt(eKey);
 			in.close();
 		} catch (FileNotFoundException e1) {
 			e1.printStackTrace();
@@ -52,13 +62,17 @@ public class TradeUtil {
 		}
 
 		if (key == null){
-			key = JOptionPane.showInputDialog ("Enter your key");
+			key = JOptionPane.showInputDialog (null,"Enter your key","API key required",JOptionPane.PLAIN_MESSAGE);
 			if (key != null && key.length() > 0){
 				int save = JOptionPane.showConfirmDialog(null, "Save key to file?", "Key saving", JOptionPane.YES_NO_OPTION);
 				if (save == JOptionPane.YES_OPTION){
 					try {
 						PrintWriter out = new PrintWriter (new FileWriter ("config.cfg"));
-						out.println(key);
+						String pass = String.valueOf (System.currentTimeMillis());
+						textEncryptor.setPassword(pass);
+						String eKey = textEncryptor.encrypt(key);
+						out.println (pass);
+						out.println(eKey);
 						out.close();
 					} catch (IOException e1) {
 						e1.printStackTrace();
@@ -70,6 +84,16 @@ public class TradeUtil {
 		//
 		JFrame window = new JFrame("Trade Utils");
 		window.setPreferredSize (new Dimension(500,600));
+		try {
+			int[] sizes = new int [] {16,32,48,64,128,256};
+			List <Image> images = new ArrayList <Image>();
+			for (int i:sizes){
+				images.add (ImageIO.read(TradeUtil.class.getResource("images/icons/icon-" + i+ ".png")));
+			}
+			window.setIconImages(images);
+		} catch (IOException e1) {
+			//e1.printStackTrace();
+		}
 
 		final DataController controller = new DataController();
 		//
@@ -85,6 +109,7 @@ public class TradeUtil {
 		JComboBox<String> refreshRate = new JComboBox<> (new String [] {"1","2","3","4","5","6","7","8","9","10","never"});
 		refreshRate.addActionListener(new ActionListener() {
 
+			@SuppressWarnings("unchecked")
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JComboBox<String> cb = (JComboBox<String>)e.getSource();
@@ -154,7 +179,6 @@ public class TradeUtil {
 		//
 		JPanel gauges = new JPanel (new GridLayout(0,2));
 		gauges.setOpaque (false);
-		//gauges.setPreferredSize (new Dimension (100,40));
 		gauges.add(genCenteredText("Steam Friends"));
 		JLabel friendsStatus = genSizedLabel ("-", 15);
 		gauges.add(friendsStatus);
@@ -209,12 +233,12 @@ public class TradeUtil {
 		};
 		//Check the SystemTray support
 		if (!SystemTray.isSupported()) {
-			System.out.println("SystemTray is not supported");
+			//System.out.println("SystemTray is not supported");
 			return null;
 		}
 		final PopupMenu popup = new PopupMenu();
 		final TrayIcon trayIcon =
-				new TrayIcon(createImages(Color.DARK_GRAY ,-1));
+				new TrayIcon(createOfferImages(Color.DARK_GRAY ,-1));
 		trayIcon.setImageAutoSize(true);
 		final SystemTray tray = SystemTray.getSystemTray();
 		trayIcon.setToolTip("TradeUtils");
@@ -236,7 +260,7 @@ public class TradeUtil {
 		try {
 			tray.add(trayIcon);
 		} catch (AWTException e) {
-			System.out.println("TrayIcon could not be added.");
+			//System.out.println("TrayIcon could not be added.");
 			return null;
 		}
 
@@ -251,9 +275,10 @@ public class TradeUtil {
 			public void actionPerformed(ActionEvent e) {
 				JOptionPane.showMessageDialog(null,
 						"Written by Andrei Ciubotariu.\n" +
-						"This program uses the Steam web API and the SteamGauges API.\n" +
-						"JSON parsing implemented using GSON." +
-						"Data fetching implemented using the Apache HTTPClient.");
+								"This program uses the Steam web API and the SteamGauges API.\n" +
+								"JSON parsing implemented using GSON. " +
+								"Data fetching implemented using Apache HTTPClient.\n" +
+								"Also uses the Jasypt library.","About", JOptionPane.PLAIN_MESSAGE);
 			}
 		});
 
@@ -274,16 +299,16 @@ public class TradeUtil {
 		return trayIcon;
 	}
 
-	private static Image createImages (Color color, int count){
+	private static Image createOfferImages (Color color, int count){
 		for (int x = 0; x < images.length;x++){
 			try {
-				URL url = TradeUtil.class.getResource("images/"+x+".png");
+				URL url = TradeUtil.class.getResource("images/trade_offers/" + x + ".png");
 				images [x] = ImageIO.read(url);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
-		
+
 		BufferedImage b = new BufferedImage (300,300, BufferedImage.TYPE_INT_ARGB);
 		b.createGraphics();
 		changeImage(color,b);
@@ -302,7 +327,6 @@ public class TradeUtil {
 		Graphics g = image.getGraphics();
 		g.setColor(color);
 		g.fillRect(0, 0, 300, 300);
-
 		return image;
 	}
 }

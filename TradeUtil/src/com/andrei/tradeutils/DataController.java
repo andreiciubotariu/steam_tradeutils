@@ -51,7 +51,7 @@ public class DataController {
 	private Timer timer;
 
 	private Date date = new Date(updatedTimeMillis);
-	private DateFormat timeFormat = new SimpleDateFormat ("hh:mm:ss");
+	private DateFormat timeFormat = new SimpleDateFormat ("HH:mm:ss");
 
 	private TrayIcon trayIcon; 
 
@@ -74,12 +74,7 @@ public class DataController {
 			}
 		}
 	};
-	
-	private Listener statusTrayIconChanger = new Listener (){
-		public void run(int count){
-			
-		}
-	};
+
 	public DataController(){
 		timer = new Timer(refreshRate*MIN, new ActionListener(){
 
@@ -152,7 +147,6 @@ public class DataController {
 				result = Fetcher.fetch(URL_STEAM_API_1+TradeUtil.key+URL_STEAM_API_2, SteamResult.class);
 			}
 			catch (Exception e){
-				//e.printStackTrace();
 				result = null;
 			}
 			try{
@@ -174,7 +168,7 @@ public class DataController {
 				Status items = new Status (gauges.IEconItems_440);
 				tf2ItemStatus.setText(items.message);
 				tf2ItemStatus.setForeground(items.color);
-				
+
 				if (trayIcon != null && trayIcon.getImage() != null){
 					trayIcon.setImage (TradeUtil.changeImage(items.color,trayIcon.getImage()));
 				}
@@ -197,8 +191,17 @@ public class DataController {
 				sent.setText("-");
 			}
 
-			date.setTime(updatedTimeMillis);
-			updatedTime.setText("Attempted refresh at: " + timeFormat.format(date));
+			if (gauges != null || result != null){
+				date.setTime(updatedTimeMillis);
+				String text = "Last refresh: " + timeFormat.format(date);
+				if (result == null && gauges != null){
+					text += " (gauges only)";
+				}
+				else if (gauges == null && result != null){
+					text += " (offers only)";
+				}
+				updatedTime.setText(text);
+			}
 
 		}
 
@@ -212,7 +215,7 @@ public class DataController {
 		else {
 			int fullyActiveOffers = 0;
 			for (TradeOffer t:offers){
-				if (t.trade_offer_state == 2 || t.trade_offer_state == 4){
+				if (t.trade_offer_state == TradeOffer.State.ACTIVE || t.trade_offer_state == TradeOffer.State.COUNTERED){
 					fullyActiveOffers++;
 				}
 			}

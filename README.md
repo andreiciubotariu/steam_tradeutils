@@ -6,4 +6,6 @@ A small Java program to notify you of new trade offers. The data is provided by 
 
 TradeUtils also checks [Steam Gauges](http://steamgaug.es/) so you can easily tell if the TF2 item API is down. This status is reflected by the tray icon color.
 
+**Key saved in `config.cfg`. Delete this file to force TradeUtils to reprompt for the key.**
+
 ![Main app](readme_images/main.png)

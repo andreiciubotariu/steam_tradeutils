@@ -1,6 +1,7 @@
 package com.andrei.tradeutils;
 
 import java.awt.Color;
+import java.awt.Image;
 import java.awt.TrayIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -53,7 +54,8 @@ public class DataController {
 	private Date date = new Date(updatedTimeMillis);
 	private DateFormat timeFormat = new SimpleDateFormat ("HH:mm:ss");
 
-	private TrayIcon trayIcon; 
+	private TrayIcon trayIcon; //TrayIcon class
+	private Image trayImage; //Image
 
 	private static abstract class Listener {
 		public abstract void run (int count);
@@ -63,14 +65,16 @@ public class DataController {
 			if (trayIcon != null){
 				trayIcon.displayMessage("New trade offers", "There are " + count + " new offer(s)", TrayIcon.MessageType.INFO);
 			}
-			//update ("You have "+  count + " new notification(s)!");
 		}
 	};
 
 	private Listener offerTrayIconChanger = new Listener (){
 		public void run(int count){
-			if (trayIcon != null && trayIcon.getImage() != null){
-				trayIcon.setImage (TradeUtil.changeImage(count,trayIcon.getImage()));
+			if (trayImage != null){
+				TradeUtil.changeImage(count,trayIcon.getImage());
+			}
+			if (trayIcon != null && trayImage != null){
+				trayIcon.setImage (trayImage);
 			}
 		}
 	};
@@ -160,6 +164,7 @@ public class DataController {
 
 		@Override
 		public void done() {
+			trayImage = trayIcon != null ? trayIcon.getImage() : null;
 			if (gauges != null){
 				Status friends = new Status (gauges.ISteamFriends);
 				steamFriendsStatus.setText(friends.message);
@@ -169,8 +174,8 @@ public class DataController {
 				tf2ItemStatus.setText(items.message);
 				tf2ItemStatus.setForeground(items.color);
 
-				if (trayIcon != null && trayIcon.getImage() != null){
-					trayIcon.setImage (TradeUtil.changeImage(items.color,trayIcon.getImage()));
+				if (trayImage != null){
+					TradeUtil.changeImage(items.color,trayIcon.getImage());
 				}
 			}
 			else {
@@ -178,7 +183,9 @@ public class DataController {
 				steamFriendsStatus.setText("-");
 				tf2ItemStatus.setForeground(Color.BLACK);
 				tf2ItemStatus.setText("-");
-				trayIcon.setImage (TradeUtil.changeImage(Color.GRAY,trayIcon.getImage()));
+				if (trayImage != null){
+					TradeUtil.changeImage(Color.GRAY,trayIcon.getImage());
+				}
 			}
 			if (result != null){
 				numRecvdOffers = checkOffers(result.response.trade_offers_received, numRecvdOffers, recvd, notificationRunnable,offerTrayIconChanger);
@@ -189,6 +196,9 @@ public class DataController {
 				recvd.setText("-");
 				sent.setForeground(Color.BLACK);
 				sent.setText("-");
+				if (trayIcon != null && trayImage != null){
+					trayIcon.setImage(trayImage);
+				}
 			}
 
 			if (gauges != null || result != null){
